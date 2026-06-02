@@ -21,3 +21,43 @@ the entries against current advisories before production use.
 | [`shopsprint-decimal-typosquat.json`](shopsprint-decimal-typosquat.json) | Go `github.com/shopsprint/decimal` v1.3.3 typosquat with DNS TXT backdoor | [Socket, 2026-05-19](https://socket.dev/blog/popular-go-decimal-library-typosquat-dns-backdoor) |
 | [`gemstuffer.json`](gemstuffer.json) | GemStuffer RubyGems exfiltration campaign (123 gems / 155 versions) targeting UK local government | [Socket, 2026-05-13](https://socket.dev/blog/gemstuffer) |
 | [`trapdoor-crypto-stealer.json`](trapdoor-crypto-stealer.json) | TrapDoor Crypto Stealer cross-ecosystem credential/wallet stealer across npm, PyPI, and Cargo/Crates.io (28 npm/PyPI entries / 378 versions; 6 Cargo packages documented under `_cargo_packages`, not matched until Cargo support lands) | [Socket, 2026-05-24](https://socket.dev/blog/trapdoor-crypto-stealer-npm-pypi-crates) |
+
+## Generating catalogs from OSV
+
+`tools/osvcatalog` converts a local [OSV](https://osv.dev) snapshot into
+a catalog offline. Bumblebee never queries osv.dev at scan time. Only
+malicious-package records (`MAL-` ids, or records aliased to one) are
+emitted, with `severity: "critical"`.
+
+Two input shapes are supported. Pick one based on coverage.
+
+**OSSF malicious-packages repo** (recommended, all ecosystems in one
+tree):
+
+```sh
+git clone --filter=blob:none --sparse --depth=1 \
+  https://github.com/ossf/malicious-packages.git mp
+git -C mp sparse-checkout set osv/malicious
+go run ./tools/osvcatalog \
+  -source "https://github.com/ossf/malicious-packages@$(git -C mp rev-parse HEAD)" \
+  -o threat_intel/osv-malicious.json mp/osv/malicious/
+```
+
+**OSV per-ecosystem dump** (single ecosystem, zip archive):
+
+```sh
+curl -fsSLO https://osv-vulnerabilities.storage.googleapis.com/npm/all.zip
+go run ./tools/osvcatalog -o threat_intel/osv-npm-malicious.json npm/all.zip
+```
+
+Each input path can be a directory tree, an OSV `all.zip` archive, or a
+single `.json` record. Supported OSV ecosystems map to Bumblebee as:
+`npm`, `PyPI` → `pypi`, `Go` → `go`, `RubyGems` → `rubygems`,
+`Packagist` → `packagist`, `VSCode` → `editor-extension`. Records with
+only a version range and no enumerated `affected[].versions` are skipped
+(v0.1 matches exact versions only); this drops the large majority of
+upstream entries (~90% of the current OSSF corpus). Output is
+deterministic, validates against the schema, and should be reviewed
+before use. The generated `_comment` records scope, per-ecosystem
+counts, skip-reason breakdown, and the optional `-source` provenance
+label.
