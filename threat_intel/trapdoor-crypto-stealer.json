@@ -1,6 +1,6 @@
 {
-  "schema_version": "0.1.0",
-  "_comment": "TrapDoor Crypto Stealer cross-ecosystem credential/wallet stealer across npm, PyPI, and Cargo/Crates.io; see https://socket.dev/blog/trapdoor-crypto-stealer-npm-pypi-crates. Source CSV: 384 versions / 34 packages (npm 21/368, pypi 7/10, cargo 6/6). Entries[] covers npm and PyPI; the 6 Cargo packages are under _cargo_packages because the v0.1 schema enum has no 'cargo' value.",
+  "schema_version": "0.2.0",
+  "_comment": "TrapDoor Crypto Stealer cross-ecosystem credential/wallet stealer across npm, PyPI, and Cargo/Crates.io; see https://socket.dev/blog/trapdoor-crypto-stealer-npm-pypi-crates. Source CSV: 384 versions / 34 packages (npm 21/368, pypi 7/10, cargo 6/6). Entries[] covers npm and PyPI; the 6 Cargo packages are under _cargo_packages because the schema ecosystem enum has no 'cargo' value.",
   "_indicators": {
     "campaign_marker": "P-2024-001",
     "payload_filename": "trap-core.js",
@@ -9,7 +9,7 @@
     "pypi_users": ["asdmini67", "dae5411"]
   },
   "_cargo_packages": {
-    "_comment": "Cargo packages from the same campaign; not in entries[] because the v0.1 schema enum does not include 'cargo'.",
+    "_comment": "Cargo packages from the same campaign; not in entries[] because the schema ecosystem enum does not include 'cargo'.",
     "packages": [
       {
         "package": "move-analyzer-build",

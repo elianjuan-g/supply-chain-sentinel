@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "_comment": "Synthetic exposure catalog used by `bumblebee selftest`. Entries reference fixture packages that do not exist on any real registry; the names are deliberately obvious so this catalog is never confused with production threat intel.",
   "entries": [
     {

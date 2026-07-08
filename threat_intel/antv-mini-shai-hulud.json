@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "_comment": "AntV / Mini Shai-Hulud npm worm wave reported by Socket on 2026-05-19. Scoped to artifacts the Socket tracker (attackId 22) first detected on or after 2026-05-13, i.e. the in-PR-window 5/19 wave. Pre-2026-05-13 artifacts from the cumulative Mini Shai-Hulud campaign (TanStack/2026-05-11, Lightning/2026-04-30, and earlier waves) are intentionally excluded from this catalog and are tracked separately. The compromised package.json carries preinstall: 'bun run index.js' and an optional dependency @antv/setup pinned to github:antvis/G2#1916faa365f2788b6e193514872d51a242876569. The worm validates stolen npm tokens, enumerates maintainable packages, injects payload/preinstall, bumps versions, and republishes.",
   "_indicators": {
     "exfil_endpoint": "https://t.m-kosche.com:443/api/public/otel/v1/traces",
