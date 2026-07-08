@@ -203,6 +203,10 @@ func Run(ctx context.Context, cfg Config) (Result, error) {
 			// so per-entry findings have distinct record_ids.
 			for _, m := range cfg.Catalog.MatchAll(r) {
 				entry, version := m.Entry, m.Version
+				evidence := "exact name+version match (version=" + version + ")"
+				if entry.AnyVersion() {
+					evidence = "exact name match, catalog entry matches any version (version=" + version + ")"
+				}
 				f := model.Finding{
 					RecordType:     model.RecordTypeFinding,
 					SchemaVersion:  cfg.BaseRecord.SchemaVersion,
@@ -225,7 +229,7 @@ func Run(ctx context.Context, cfg Config) (Result, error) {
 					SourceType:     r.SourceType,
 					SourceFile:     r.SourceFile,
 					Confidence:     r.Confidence,
-					Evidence:       "exact name+version match (version=" + version + ")",
+					Evidence:       evidence,
 				}
 				if err := cfg.Emitter.EmitFinding(f); err == nil {
 					findingsMu.Lock()

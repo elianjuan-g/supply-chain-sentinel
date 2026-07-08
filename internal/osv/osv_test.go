@@ -241,6 +241,84 @@ func TestBuildCatalogCommentDeterministic(t *testing.T) {
 	}
 }
 
+// TestConvertAllVersionsRanges covers the introduced:"0" all-versions
+// range shape, emitted as versions ["*"]. Bounded and GIT-only ranges
+// stay skipped.
+func TestConvertAllVersionsRanges(t *testing.T) {
+	records := []Record{
+		{ID: "MAL-semver", Affected: []Affected{{Package: Package{Ecosystem: "npm", Name: "a"}, Ranges: []Range{{Type: "SEMVER", Events: []map[string]string{{"introduced": "0"}}}}}}},
+		{ID: "MAL-eco", Affected: []Affected{{Package: Package{Ecosystem: "PyPI", Name: "b"}, Ranges: []Range{{Type: "ECOSYSTEM", Events: []map[string]string{{"introduced": "0"}}}}}}},
+		{ID: "MAL-intro", Affected: []Affected{{Package: Package{Ecosystem: "npm", Name: "c"}, Ranges: []Range{{Type: "SEMVER", Events: []map[string]string{{"introduced": "1.5.0"}}}}}}},
+		{ID: "MAL-fixed", Affected: []Affected{{Package: Package{Ecosystem: "npm", Name: "d"}, Ranges: []Range{{Type: "SEMVER", Events: []map[string]string{{"introduced": "0"}, {"fixed": "2.0.0"}}}}}}},
+		{ID: "MAL-git", Affected: []Affected{{Package: Package{Ecosystem: "npm", Name: "e"}, Ranges: []Range{{Type: "GIT", Events: []map[string]string{{"introduced": "0"}}}}}}},
+	}
+	entries, st := Convert(records, Options{})
+	if len(entries) != 2 {
+		t.Fatalf("want 2 entries, got %d: %+v", len(entries), entries)
+	}
+	for _, e := range entries {
+		if !reflect.DeepEqual(e.Versions, []string{"*"}) {
+			t.Errorf("%s versions = %v, want [*]", e.ID, e.Versions)
+		}
+	}
+	if st.AnyVersionEntries != 2 {
+		t.Errorf("AnyVersionEntries = %d, want 2", st.AnyVersionEntries)
+	}
+	if st.SkippedNoVersions != 3 {
+		t.Errorf("SkippedNoVersions = %d, want 3", st.SkippedNoVersions)
+	}
+}
+
+// TestConvertAllVersionsWinsOverEnumerated: an all-versions range for a
+// package covers any enumerated versions, so the entry collapses to ["*"].
+func TestConvertAllVersionsWinsOverEnumerated(t *testing.T) {
+	records := []Record{{ID: "MAL-mixed", Affected: []Affected{
+		{Package: Package{Ecosystem: "npm", Name: "p"}, Versions: []string{"1.0.0"}},
+		{Package: Package{Ecosystem: "npm", Name: "p"}, Ranges: []Range{{Type: "SEMVER", Events: []map[string]string{{"introduced": "0"}}}}},
+	}}}
+	entries, st := Convert(records, Options{})
+	if len(entries) != 1 || !reflect.DeepEqual(entries[0].Versions, []string{"*"}) {
+		t.Fatalf("want single [*] entry, got %+v", entries)
+	}
+	if st.AnyVersionEntries != 1 {
+		t.Errorf("AnyVersionEntries = %d, want 1", st.AnyVersionEntries)
+	}
+}
+
+// TestRoundTripAnyVersion: a generated any-version entry survives
+// exposure.LoadFile and matches an arbitrary discovered version.
+func TestRoundTripAnyVersion(t *testing.T) {
+	records := []Record{
+		{ID: "MAL-any", Summary: "Malicious code in wild-pkg", Affected: []Affected{{Package: Package{Ecosystem: "npm", Name: "wild-pkg"}, Ranges: []Range{{Type: "SEMVER", Events: []map[string]string{{"introduced": "0"}}}}}}},
+	}
+	entries, st := Convert(records, Options{})
+	catalog := BuildCatalog(entries, Options{}, st)
+	if !strings.Contains(catalog.Comment, "Any-version entries: 1.") {
+		t.Errorf("comment missing any-version count:\n%s", catalog.Comment)
+	}
+
+	data, err := json.Marshal(catalog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "osv.json")
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cat, err := exposure.LoadFile(path, 1<<20)
+	if err != nil {
+		t.Fatalf("exposure.LoadFile rejected generated catalog: %v", err)
+	}
+	hit, ver := cat.Match(model.Record{Ecosystem: "npm", NormalizedName: "wild-pkg", Version: "9.9.9"})
+	if hit == nil || ver != "9.9.9" {
+		t.Fatalf("any-version entry did not match (hit=%v ver=%q)", hit, ver)
+	}
+	if !hit.AnyVersion() {
+		t.Error("matched entry should report AnyVersion")
+	}
+}
+
 // TestSeverityCritical verifies generated entries carry severity="critical",
 // matching hand-curated malicious-package catalogs in threat_intel/.
 func TestSeverityCritical(t *testing.T) {

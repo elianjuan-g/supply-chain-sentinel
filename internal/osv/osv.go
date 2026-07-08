@@ -9,12 +9,13 @@
 // not vulnerability tracking, and mixing the two would produce huge
 // catalogs whose entries can't faithfully carry an OSV-side severity.
 //
-// Matching is by (ecosystem, normalized_name, exact version), so only
-// OSV's enumerated affected[].versions are usable. An affected entry
-// with only a version range (commonly introduced:"0", i.e. all versions)
-// has nothing to match against — v0.1 has no all-versions wildcard — and
-// is skipped. This drops a substantial share of malicious-package
-// records and is the import's main coverage limit.
+// Matching is by (ecosystem, normalized_name, exact version), so
+// enumerated affected[].versions convert directly. An affected entry
+// whose ranges declare that every version is affected (a SEMVER or
+// ECOSYSTEM range with a single introduced:"0" event) is emitted as the
+// any-version entry ["*"] (schema v0.2). Entries with only bounded
+// ranges and no enumerated versions have nothing exact to match against
+// and are still skipped.
 package osv
 
 import (
@@ -37,7 +38,7 @@ import (
 var idShape = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/-]{0,128}$`)
 
 // Catalog is the exposure-catalog document this package emits, matching
-// docs/schema/v0.1.0/exposure-catalog.schema.json with a leading
+// docs/schema/v0.2.0/exposure-catalog.schema.json with a leading
 // `_comment` recording provenance.
 type Catalog struct {
 	SchemaVersion string         `json:"schema_version"`
@@ -95,16 +96,20 @@ func comment(opts Options, st Stats) string {
 	if len(skips) > 0 {
 		skipStr = " Skipped: " + strings.Join(skips, ", ") + "."
 	}
+	anyStr := ""
+	if st.AnyVersionEntries > 0 {
+		anyStr = fmt.Sprintf(" Any-version entries: %d.", st.AnyVersionEntries)
+	}
 	srcStr := ""
 	if s := strings.TrimSpace(opts.Source); s != "" {
 		srcStr = " Source: " + s + "."
 	}
 	return fmt.Sprintf(
 		"Generated offline from OSV (https://osv.dev) by tools/osvcatalog; not fetched at scan time. "+
-			"Scope: malicious packages only (MAL- ids). %d entries across %d source records (by ecosystem: %s).%s%s "+
-			"Affected entries with only version ranges and no enumerated versions are not included, "+
-			"since v0.1 matching is exact-version only.",
-		st.Entries, st.RecordsSeen, byEco, skipStr, srcStr)
+			"Scope: malicious packages only (MAL- ids). %d entries across %d source records (by ecosystem: %s).%s%s%s "+
+			"Affected entries whose ranges declare all versions affected are emitted as versions [\"*\"]; "+
+			"entries with only bounded ranges and no enumerated versions are not included.",
+		st.Entries, st.RecordsSeen, byEco, anyStr, skipStr, srcStr)
 }
 
 // Record is the subset of an OSV record consumed by the converter.
@@ -120,6 +125,38 @@ type Record struct {
 type Affected struct {
 	Package  Package  `json:"package"`
 	Versions []string `json:"versions"`
+	Ranges   []Range  `json:"ranges"`
+}
+
+// Range is one affected-version range. Events are kept as raw key/value
+// maps because only the all-versions shape ({"introduced": "0"}) is
+// interpreted; bounded ranges are never converted.
+type Range struct {
+	Type   string              `json:"type"`
+	Events []map[string]string `json:"events"`
+}
+
+// allVersions reports whether the entry's ranges declare every version
+// affected: at least one SEMVER or ECOSYSTEM range whose events are all
+// exactly {"introduced": "0"}. Any other event in such a range (fixed,
+// last_affected, a nonzero introduced, ...) bounds the range and
+// disqualifies the entry. GIT and other range types are ignored.
+func (a Affected) allVersions() bool {
+	found := false
+	for _, rng := range a.Ranges {
+		if rng.Type != "SEMVER" && rng.Type != "ECOSYSTEM" {
+			continue
+		}
+		for _, ev := range rng.Events {
+			if len(ev) != 1 || ev["introduced"] != "0" {
+				return false
+			}
+		}
+		if len(rng.Events) > 0 {
+			found = true
+		}
+	}
+	return found
 }
 
 // Package identifies the affected package in OSV's namespace.
@@ -156,6 +193,7 @@ type Options struct {
 type Stats struct {
 	RecordsSeen         int
 	Entries             int
+	AnyVersionEntries   int
 	SkippedWithdrawn    int
 	SkippedNotMalicious int
 	SkippedNoVersions   int
@@ -251,10 +289,13 @@ func (r Record) toEntries(opts Options, st *Stats) []CatalogEntry {
 	}
 
 	// Aggregate enumerated versions per (ecosystem, name) so multiple
-	// affected ranges for the same package collapse into one entry.
+	// affected ranges for the same package collapse into one entry. An
+	// all-versions range anywhere for the key wins over enumerated
+	// versions, since it covers them.
 	type key struct{ eco, name string }
 	order := []key{}
 	versions := map[key]map[string]struct{}{}
+	anyVersion := map[key]bool{}
 	for _, a := range r.Affected {
 		eco, ok := mapEcosystem(a.Package.Ecosystem)
 		if !ok {
@@ -271,11 +312,19 @@ func (r Record) toEntries(opts Options, st *Stats) []CatalogEntry {
 			// (empty names are effectively nonexistent in the real corpus).
 			continue
 		}
+		k := key{eco, name}
 		if len(a.Versions) == 0 {
-			st.SkippedNoVersions++
+			if !a.allVersions() {
+				st.SkippedNoVersions++
+				continue
+			}
+			if _, seen := versions[k]; !seen {
+				versions[k] = map[string]struct{}{}
+				order = append(order, k)
+			}
+			anyVersion[k] = true
 			continue
 		}
-		k := key{eco, name}
 		set, seen := versions[k]
 		if !seen {
 			set = map[string]struct{}{}
@@ -292,15 +341,21 @@ func (r Record) toEntries(opts Options, st *Stats) []CatalogEntry {
 	multi := len(order) > 1
 	var entries []CatalogEntry
 	for _, k := range order {
-		set := versions[k]
-		if len(set) == 0 {
-			continue
+		var vers []string
+		if anyVersion[k] {
+			vers = []string{"*"}
+			st.AnyVersionEntries++
+		} else {
+			set := versions[k]
+			if len(set) == 0 {
+				continue
+			}
+			vers = make([]string, 0, len(set))
+			for v := range set {
+				vers = append(vers, v)
+			}
+			sort.Strings(vers)
 		}
-		vers := make([]string, 0, len(set))
-		for v := range set {
-			vers = append(vers, v)
-		}
-		sort.Strings(vers)
 
 		id := r.ID
 		// Keep entry ids unique when one advisory names several packages,

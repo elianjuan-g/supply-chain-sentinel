@@ -390,17 +390,56 @@ func TestMatchAllReturnsOverlappingEntries(t *testing.T) {
 }
 
 func TestParseCatalogSchemaVersion(t *testing.T) {
-	c, err := Parse([]byte(`{"schema_version":"0.1.0","entries":[{"id":"x","ecosystem":"npm","package":"foo","versions":["1.0.0"]}]}`))
-	if err != nil {
-		t.Fatalf("parse versioned catalog: %v", err)
-	}
-	if c.SchemaVersion != model.SchemaVersion {
-		t.Fatalf("schema_version=%q, want %q", c.SchemaVersion, model.SchemaVersion)
+	for _, v := range supportedSchemaVersions {
+		c, err := Parse([]byte(`{"schema_version":"` + v + `","entries":[{"id":"x","ecosystem":"npm","package":"foo","versions":["1.0.0"]}]}`))
+		if err != nil {
+			t.Fatalf("parse %s catalog: %v", v, err)
+		}
+		if c.SchemaVersion != v {
+			t.Fatalf("schema_version=%q, want %q", c.SchemaVersion, v)
+		}
 	}
 }
 
 func TestParseCatalogRejectsUnsupportedSchemaVersion(t *testing.T) {
 	if _, err := Parse([]byte(`{"schema_version":"9.9.9","entries":[]}`)); err == nil {
 		t.Fatal("expected unsupported schema_version error")
+	}
+}
+
+func TestMatchAnyVersion(t *testing.T) {
+	c, err := Parse([]byte(`{"schema_version":"0.2.0","entries":[
+		{"id":"mal-1","ecosystem":"npm","package":"evil","versions":["*"],"severity":"critical"}
+	]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, v := c.Match(model.Record{Ecosystem: "npm", NormalizedName: "evil", Version: "1.2.3"})
+	if e == nil || e.ID != "mal-1" || !e.AnyVersion() {
+		t.Fatalf("expected any-version hit, got %v", e)
+	}
+	if v != "1.2.3" {
+		t.Errorf("matched version=%q, want record version", v)
+	}
+
+	// Records without a version (e.g. MCP servers) match too.
+	if e, v := c.Match(model.Record{Ecosystem: "npm", NormalizedName: "evil"}); e == nil || v != "" {
+		t.Fatalf("expected empty-version hit, got %v, %q", e, v)
+	}
+
+	if e, _ := c.Match(model.Record{Ecosystem: "npm", NormalizedName: "good", Version: "1.2.3"}); e != nil {
+		t.Fatal("expected miss for other package")
+	}
+}
+
+func TestParseRejectsAnyVersionMixedWithExact(t *testing.T) {
+	if _, err := Parse([]byte(`{"schema_version":"0.2.0","entries":[{"id":"a","ecosystem":"npm","package":"x","versions":["*","1.0.0"]}]}`)); err == nil {
+		t.Fatal(`expected error for "*" mixed with exact versions`)
+	}
+}
+
+func TestParseRejectsAnyVersionInOldSchema(t *testing.T) {
+	if _, err := Parse([]byte(`{"schema_version":"0.1.0","entries":[{"id":"a","ecosystem":"npm","package":"x","versions":["*"]}]}`)); err == nil {
+		t.Fatal(`expected error for "*" under schema_version 0.1.0`)
 	}
 }

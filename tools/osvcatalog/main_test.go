@@ -65,7 +65,7 @@ func TestRunFromZip(t *testing.T) {
 	if err := json.Unmarshal(data, &cat); err != nil {
 		t.Fatalf("output is not valid JSON: %v", err)
 	}
-	if cat.SchemaVersion != "0.1.0" {
+	if cat.SchemaVersion != "0.2.0" {
 		t.Errorf("schema_version = %q", cat.SchemaVersion)
 	}
 	// Malicious-only by default: only MAL-2024-1, not the GHSA vuln.
