@@ -21,10 +21,11 @@
 //
 // Only malicious-package records (MAL- ids, or records aliased to one)
 // are emitted, with severity "critical". Vulnerability advisories are
-// out of scope. Records whose only version information is a range (no
-// enumerated versions) are skipped — see internal/osv.
+// out of scope. Records whose ranges declare all versions affected are
+// emitted with versions ["*"]; records with only bounded ranges and no
+// enumerated versions are skipped — see internal/osv.
 //
-// The output validates against docs/schema/v0.1.0/exposure-catalog.schema.json
+// The output validates against docs/schema/v0.2.0/exposure-catalog.schema.json
 // and is consumed by `bumblebee scan --exposure-catalog`.
 package main
 
@@ -103,8 +104,8 @@ func run(args []string, stdout, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(stderr, "osvcatalog: %d entries from %d records (skipped: %d non-malicious, %d no-versions, %d unsupported-ecosystem, %d withdrawn, %d bad-id)\n",
-		st.Entries, st.RecordsSeen, st.SkippedNotMalicious, st.SkippedNoVersions, st.SkippedEcosystem, st.SkippedWithdrawn, st.SkippedBadID)
+	fmt.Fprintf(stderr, "osvcatalog: %d entries (%d any-version) from %d records (skipped: %d non-malicious, %d no-versions, %d unsupported-ecosystem, %d withdrawn, %d bad-id)\n",
+		st.Entries, st.AnyVersionEntries, st.RecordsSeen, st.SkippedNotMalicious, st.SkippedNoVersions, st.SkippedEcosystem, st.SkippedWithdrawn, st.SkippedBadID)
 	return nil
 }
 

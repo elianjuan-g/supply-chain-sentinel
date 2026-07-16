@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "_comment": "GemStuffer campaign (Socket, 2026-05-13). The actor abused RubyGems as a data transport/exfiltration channel for scraped UK local government content rather than as a conventional mass developer-compromise payload. Severity is set to high (not critical) because the gems are an exfil-channel artifact rather than a worm/credential stealer: presence on a developer endpoint still indicates either accidental install or directed compromise and is worth flagging. Embedded Socket tracker enumerated 155 artifact rows at handoff, deduped here to one entry per (ecosystem, gem) with the published versions. Example gems explicitly called out by the article include lambeth71b and agenda-sample-yard / agenda-sample-result. The scanner does exact (ecosystem, name, version) matching only.",
   "_indicators": {
     "payload_rb_sha256": "239440c830e17530dda0a8a06ed2708860998750a1e3ed2239e919465dc59420",

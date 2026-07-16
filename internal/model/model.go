@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	SchemaVersion = "0.1.0"
+	SchemaVersion = "0.2.0"
 	ScannerName   = "bumblebee"
 
 	RecordTypePackage     = "package"
@@ -28,8 +28,8 @@ const (
 	ProfileProject  = "project"  // configured developer/project roots
 	ProfileDeep     = "deep"     // incident-response exposure scan
 
-	// FindingType discriminates between possible finding shapes. v0.1 only
-	// emits package_exposure (exact name+version match against an
+	// FindingType discriminates between possible finding shapes. Only
+	// package_exposure is emitted (name+version match against an
 	// operator-supplied exposure catalog).
 	FindingTypePackageExposure = "package_exposure"
 )
@@ -175,8 +175,9 @@ type Record struct {
 // stream) but are tagged with record_type=finding so receivers can route
 // them to a separate exposure table without re-running the match.
 //
-// v0.1 only emits FindingTypePackageExposure: an exact (ecosystem,
-// normalized_name, version) match. Catalog entry id and name are echoed
+// Only FindingTypePackageExposure is emitted: an exact (ecosystem,
+// normalized_name, version) match, or a name match against an
+// any-version catalog entry. Catalog entry id and name are echoed
 // so receivers can attribute the hit without re-loading the catalog.
 type Finding struct {
 	RecordType     string   `json:"record_type"`

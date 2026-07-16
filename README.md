@@ -167,7 +167,7 @@ Package record:
 {
   "record_type": "package",
   "record_id": "package:...",
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "scanner_name": "bumblebee",
   "scanner_version": "v0.1.1",
   "run_id": "9b1f0c2e4d5a6b7c8d9e0f1a2b3c4d5e",
@@ -212,7 +212,7 @@ Finding record (exposure-catalog match):
 {
   "record_type": "finding",
   "record_id": "finding:...",
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "scanner_name": "bumblebee",
   "scanner_version": "v0.1.1",
   "run_id": "3a8c7d1e9f0b2a4c6d8e0f1a2b3c4d5e",
@@ -251,11 +251,12 @@ guidance: [docs/state-model.md](docs/state-model.md#record-identity-record_id).
 
 ## Exposure Catalog Format
 
-Minimal JSON, exact `(ecosystem, name, version)` matching only:
+Minimal JSON, exact `(ecosystem, name, version)` matching. An entry may
+declare `"versions": ["*"]` to match every version of the package:
 
 ```json
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "entries": [
     {
       "id": "advisory-2026-0042",
@@ -270,10 +271,11 @@ Minimal JSON, exact `(ecosystem, name, version)` matching only:
 ```
 
 The catalog must be a JSON object with `schema_version` and `entries`
-keys. Bare top-level arrays are rejected. Unsupported future
-`schema_version` values are rejected. Multiple catalog files can be
-loaded together by pointing `--exposure-catalog` at a directory; see
-the flag description above.
+keys. Bare top-level arrays are rejected. `schema_version` `0.1.0`
+catalogs are still accepted (they cannot use `"*"`); unsupported future
+values are rejected. Multiple catalog files can be loaded together by
+pointing `--exposure-catalog` at a directory; see the flag description
+above.
 
 ### Sample exposure catalogs
 

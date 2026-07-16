@@ -7,10 +7,12 @@
 // IOC feed for network indicators, dropped files, or process behavior;
 // those are EDR concerns and live outside this scanner.
 //
-// v0.1 matching is exact: a package record matches a catalog entry when
+// Matching is exact: a package record matches a catalog entry when
 // ecosystem and normalized name are equal and the package version equals
-// one of the catalog entry's versions. Version ranges, hash matching,
-// and integrity-based matching are out of scope for v0.1.
+// one of the catalog entry's versions. As of schema v0.2 an entry may
+// instead declare versions ["*"], which matches every version of the
+// package (including records with no version). Version ranges, hash
+// matching, and integrity-based matching remain out of scope.
 package exposure
 
 import (
@@ -26,6 +28,10 @@ import (
 	"github.com/perplexityai/bumblebee/internal/model"
 	"github.com/perplexityai/bumblebee/internal/normalize"
 )
+
+// AnyVersion is the wildcard versions value that matches every version
+// of a package. Requires catalog schema_version 0.2.0 or later.
+const AnyVersion = "*"
 
 // Catalog is a parsed exposure catalog.
 //
@@ -44,7 +50,8 @@ type Catalog struct {
 //
 // Required fields: ID, Ecosystem, Package, Versions. Versions are matched
 // exactly against a discovered package's Version field; any of the
-// listed strings is sufficient for a hit.
+// listed strings is sufficient for a hit. The single-element list ["*"]
+// (schema v0.2+) matches any version.
 //
 // Optional Name is a free-form human label echoed onto findings as
 // `catalog_name`; it is not used for matching.
@@ -60,6 +67,13 @@ type Entry struct {
 	Severity  string   `json:"severity,omitempty"`
 
 	normalized string
+	anyVersion bool
+}
+
+// AnyVersion reports whether the entry matches every version of its
+// package (versions declared as ["*"]).
+func (e *Entry) AnyVersion() bool {
+	return e.anyVersion
 }
 
 // Match reports whether record matches any catalog entry, and returns the
@@ -79,6 +93,8 @@ func (c *Catalog) Match(r model.Record) (*Entry, string) {
 }
 
 // Match is a single (entry, matched-version) pair returned by MatchAll.
+// For an any-version entry, Version is the record's version (possibly
+// empty) rather than a catalog string.
 type Match struct {
 	Entry   *Entry
 	Version string
@@ -100,6 +116,10 @@ func (c *Catalog) MatchAll(r model.Record) []Match {
 	}
 	var out []Match
 	for _, e := range hits {
+		if e.anyVersion {
+			out = append(out, Match{Entry: e, Version: r.Version})
+			continue
+		}
 		for _, v := range e.Versions {
 			if v == r.Version {
 				out = append(out, Match{Entry: e, Version: v})
@@ -290,7 +310,18 @@ func build(schemaVersion string, in []Entry) (*Catalog, error) {
 			return nil, fmt.Errorf("catalog entry %q: missing package", e.ID)
 		}
 		if len(e.Versions) == 0 {
-			return nil, fmt.Errorf("catalog entry %q: at least one version is required (v0.1 only supports exact-version matching)", e.ID)
+			return nil, fmt.Errorf("catalog entry %q: at least one version is required", e.ID)
+		}
+		for _, v := range e.Versions {
+			if v == AnyVersion {
+				if schemaVersion == "0.1.0" {
+					return nil, fmt.Errorf("catalog entry %q: versions %q requires schema_version %q", e.ID, AnyVersion, model.SchemaVersion)
+				}
+				if len(e.Versions) != 1 {
+					return nil, fmt.Errorf("catalog entry %q: %q must be the only element of versions", e.ID, AnyVersion)
+				}
+				e.anyVersion = true
+			}
 		}
 		e.normalized = normalizeName(e.Ecosystem, e.Package)
 		c.Entries = append(c.Entries, e)
@@ -303,15 +334,21 @@ func build(schemaVersion string, in []Entry) (*Catalog, error) {
 	return c, nil
 }
 
+// supportedSchemaVersions lists catalog schema versions the loader
+// accepts. v0.1.0 catalogs remain valid; they just cannot use "*".
+var supportedSchemaVersions = []string{"0.1.0", model.SchemaVersion}
+
 func validateSchemaVersion(version string) error {
 	version = strings.TrimSpace(version)
 	if version == "" {
-		return fmt.Errorf("exposure catalog schema_version is required (supported: %q)", model.SchemaVersion)
+		return fmt.Errorf("exposure catalog schema_version is required (supported: %q)", supportedSchemaVersions)
 	}
-	if version != model.SchemaVersion {
-		return fmt.Errorf("unsupported exposure catalog schema_version %q (supported: %q)", version, model.SchemaVersion)
+	for _, v := range supportedSchemaVersions {
+		if version == v {
+			return nil
+		}
 	}
-	return nil
+	return fmt.Errorf("unsupported exposure catalog schema_version %q (supported: %q)", version, supportedSchemaVersions)
 }
 
 // normalizeName mirrors the per-ecosystem normalization used when

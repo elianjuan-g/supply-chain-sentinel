@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "_comment": "Go module github.com/shopsprint/decimal v1.3.3, a long-running typosquat of github.com/shopspring/decimal. The v1.3.3 release adds an init() DNS TXT C2 polling dnslog-cdn-images.freemyip.com every five minutes and executes returned TXT values with os/exec.Command. Indicators sourced from Socket's 2026-05-19 report. Network/file IOCs (C2 domain, commit hash, file/tarball hashes) are noted for analyst context; the scanner itself does exact (ecosystem, name, version) matching only.",
   "entries": [
     {

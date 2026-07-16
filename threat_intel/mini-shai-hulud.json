@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "_comment": "Best-effort public Mini/Shai-Hulud May 2026 package exposure catalog generated from the static OX Security affected-package table and cross-checked against public Fleet, Socket, Snyk, Mistral, TanStack, and The Hacker News reporting. This is intended for exact package/version presence checks, not network/file/process IOC checks. Public reporting says 170+ packages were affected; this file contains the static package/version rows available from the cited public table at generation time. Keep it updated from authoritative advisories before production use.",
   "entries": [
     {

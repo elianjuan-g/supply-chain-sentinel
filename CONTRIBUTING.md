@@ -37,7 +37,7 @@ New catalogs land under `threat_intel/`. Before submitting:
   ```sh
   python3 -c "import json, jsonschema; \
     jsonschema.validate(json.load(open('threat_intel/your-catalog.json')), \
-      json.load(open('docs/schema/v0.1.0/exposure-catalog.schema.json')))"
+      json.load(open('docs/schema/v0.2.0/exposure-catalog.schema.json')))"
   ```
 
 - Include a `_comment` field at the catalog root with the methodology
@@ -54,10 +54,10 @@ Catalogs can also be generated offline from OSV data with
 
 ## Schema changes
 
-Any change to `docs/schema/v0.1.0/*.json` or the wire format that breaks
-existing consumers is a breaking change. Land it as a new version
-directory (`docs/schema/v0.2.0/`) and bump `model.SchemaVersion`
-together; do not edit a published schema in place.
+Any change to a published `docs/schema/<version>/*.json` or the wire
+format that breaks existing consumers is a breaking change. Land it as a
+new version directory (e.g. `docs/schema/v0.3.0/`) and bump
+`model.SchemaVersion` together; do not edit a published schema in place.
 
 ## Security issues
 

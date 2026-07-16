@@ -266,6 +266,63 @@ func TestFindingEmittedPerCatalogEntryWhenOverlapping(t *testing.T) {
 	}
 }
 
+// TestFindingEvidenceForAnyVersionEntry verifies a versions ["*"] entry
+// matches whatever version is installed and says so in the evidence.
+func TestFindingEvidenceForAnyVersionEntry(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "proj", "package-lock.json"),
+		`{"lockfileVersion":3,"packages":{"node_modules/evil":{"version":"4.5.6"}}}`)
+
+	cat, err := exposure.Parse([]byte(`{"schema_version":"0.2.0","entries":[
+		{"id":"adv-any","ecosystem":"npm","package":"evil","versions":["*"],"severity":"critical"}
+	]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stdout := &bytes.Buffer{}
+	em := output.New(stdout, &bytes.Buffer{}, "run-any")
+	res, err := Run(context.Background(), Config{
+		Profile:     model.ProfileDeep,
+		Roots:       []Root{{Path: root, Kind: model.RootKindDeepHome}},
+		MaxFileSize: 1 << 20,
+		Concurrency: 1,
+		Catalog:     cat,
+		BaseRecord: model.Record{
+			SchemaVersion:  model.SchemaVersion,
+			ScannerName:    model.ScannerName,
+			ScannerVersion: "test",
+			RunID:          "run-any",
+			ScanTime:       time.Now().UTC().Format(time.RFC3339Nano),
+		},
+		Emitter: em,
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if res.FindingsEmitted != 1 {
+		t.Fatalf("findings=%d, want 1", res.FindingsEmitted)
+	}
+	var f model.Finding
+	for _, line := range bytes.Split(bytes.TrimSpace(stdout.Bytes()), []byte("\n")) {
+		var probe map[string]any
+		if err := json.Unmarshal(line, &probe); err != nil {
+			t.Fatalf("bad ndjson: %v: %s", err, line)
+		}
+		if probe["record_type"] == model.RecordTypeFinding {
+			if err := json.Unmarshal(line, &f); err != nil {
+				t.Fatalf("decode finding: %v", err)
+			}
+		}
+	}
+	if f.CatalogID != "adv-any" || f.Version != "4.5.6" {
+		t.Fatalf("matched fields wrong: %+v", f)
+	}
+	if !strings.Contains(f.Evidence, "matches any version (version=4.5.6)") {
+		t.Errorf("evidence=%q", f.Evidence)
+	}
+}
+
 // TestNoFindingWithoutCatalog verifies that with no catalog wired up,
 // the scanner emits no finding records at all.
 func TestNoFindingWithoutCatalog(t *testing.T) {
