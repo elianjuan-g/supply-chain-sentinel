@@ -12,6 +12,7 @@ the entries against current advisories before production use.
 
 | File | Campaign | Source |
 |---|---|---|
+| [`memtensor-2026-09-23.json`](memtensor-2026-09-23.json) | MemTensor npm and PyPI credential-stealer compromise (2 packages / 4 malicious versions) | [Socket, 2026-09-23](https://socket.dev/blog/memtensor-compromise) |
 | [`mastra-2026-06-17.json`](mastra-2026-06-17.json) | Mastra npm supply-chain compromise (141 packages / 141 versions across `@mastra/*` plus `create-mastra` and the `easy-day-js@1.11.22` typosquat dependency that delivered a cross-platform infostealer via postinstall) | [Socket, 2026-06-17](https://socket.dev/blog/mastra-npm-packages-compromised) |
 | [`mini-shai-hulud-leoplatform-2026-06-24.json`](mini-shai-hulud-leoplatform-2026-06-24.json) | Mini Shai-Hulud / Miasma (Hades variant) LeoPlatform/RStreams wave (compromised `czirker` npm account; 26 npm packages + 1 Go module / 27 versions; "Phantom Gyp" `binding.gyp` install hook, Bun-staged infostealer, "Alright Lets See If This Works" dead-drop marker) | [Socket, 2026-06-24](https://socket.dev/blog/miasma-mini-shai-hulud-hits-leoplatform-npm-packages-go-ecosystem); [OX Security, 2026-06-24](https://www.ox.security/blog/alright-lets-see-if-this-works-shai-hulud-miasma-hades-variant-spreads-on-npm/) |
 | [`mini-shai-hulud.json`](mini-shai-hulud.json) | Mini/Shai-Hulud May 2026 npm and PyPI compromise (OX Security affected-package table) | Cross-checked against Fleet, Socket, Snyk, Mistral, TanStack, The Hacker News |
