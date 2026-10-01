@@ -1,0 +1,38 @@
+{
+  "schema_version": "0.2.0",
+  "_comment": "Malicious MemTensor releases published on 2026-09-23 across npm and PyPI. Socket identified three compromised @memtensor/memos-cloud-openclaw-plugin versions and one compromised MemoryOS version, all carrying a cross-platform credential stealer. The npm versions were subsequently yanked: the npm packument retains their publication timestamps but no longer exposes tarball metadata; OSV MAL-2026-16476 and GHSA-mhjf-v53x-7p87 retain all three affected versions. The PyPI release was also removed from the registry; deps.dev retains its 2026-09-23T05:25:22Z publication timestamp and OSV MAL-2026-16475 retains the affected version.",
+  "entries": [
+    {
+      "id": "socket-2026-09-23-npm-memtensor-memos-cloud-openclaw-plugin",
+      "name": "@memtensor/memos-cloud-openclaw-plugin (MemTensor credential-stealer compromise)",
+      "ecosystem": "npm",
+      "package": "@memtensor/memos-cloud-openclaw-plugin",
+      "versions": [
+        "0.1.21",
+        "0.1.23",
+        "0.1.25"
+      ],
+      "severity": "critical",
+      "source": "https://socket.dev/blog/memtensor-compromise",
+      "references": [
+        "https://osv.dev/vulnerability/MAL-2026-16476",
+        "https://github.com/advisories/GHSA-mhjf-v53x-7p87"
+      ]
+    },
+    {
+      "id": "socket-2026-09-23-pypi-memoryos",
+      "name": "MemoryOS (MemTensor credential-stealer compromise)",
+      "ecosystem": "pypi",
+      "package": "MemoryOS",
+      "versions": [
+        "2.0.34"
+      ],
+      "severity": "critical",
+      "source": "https://socket.dev/blog/memtensor-compromise",
+      "references": [
+        "https://osv.dev/vulnerability/MAL-2026-16475",
+        "https://api.deps.dev/v3/systems/PYPI/packages/MemoryOS/versions/2.0.34"
+      ]
+    }
+  ]
+}
