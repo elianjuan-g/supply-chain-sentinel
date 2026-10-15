@@ -25,14 +25,18 @@ lapisan dan fitur milik Rumah Tangga Elian tanpa menghapus kredit pembuat asli.
   - `sentinel-notify.sh` — kirim temuan ke Meja Bar (sender CIEL, pola fw-watch); dedup via hash; diam bila tak ada temuan; DRY_RUN=1 untuk uji
 - `BLUEPRINT.md` — peta arsitektur + hasil diverge→converge + premortem
 
-## Operasi yang disarankan (cron di PC — BELUM dipasang, menunggu persetujuan jadwal)
+## Operasi (cron di PC — TERPASANG 2026-10-16 atas "Gass" MyLord)
 
 ```cron
-# diff + audit + notifikasi: tiap pagi 07:00
-0 7 * * * ~/.local/bin/sentinel-diff && ~/.local/bin/sentinel-mcp-audit && ~/.local/bin/sentinel-notify
+# diff + audit + notifikasi: tiap pagi 07:00 (diam bila bersih)
+0 7 * * * /home/elian/.local/bin/sentinel-daily
 # refresh katalog intel: tiap Minggu 04:00
-0 4 * * 0 ~/.local/bin/sentinel-refresh
+0 4 * * 0 /home/elian/.local/bin/sentinel-refresh >>/home/elian/.hermes/sentinel/cron-refresh.log 2>&1
 ```
+
+`sentinel-daily` = diff + mcp-audit + postinstall + typosquat → notify.
+secretscan SENGAJA tidak di-cron (tetap opt-in `SENTINEL_SECRETSCAN=1`).
+Log: `~/.hermes/sentinel/cron-daily.log` (rotasi 200 baris).
 
 State: `~/.hermes/sentinel/` (baseline, katalog, allowlist, log).
 Katalog live: `~/.hermes/sentinel/catalog/` → pakai `bumblebee scan --exposure-catalog ~/.hermes/sentinel/catalog/`.
