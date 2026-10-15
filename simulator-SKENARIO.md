@@ -1,7 +1,7 @@
 # Self-Attack Simulator — Daftar Skenario (DOKUMEN SAJA, BELUM DIEKSEKUSI)
 
-> Gate G2: tiap skenario butuh stempel MyLord satu per satu SEBELUM eksekusi.
-> Gate G1: eksekusi HANYA di sandbox tanpa jaringan + tanpa akses file rumah tangga.
+> Gate G2: tiap skenario butuh stempel operator satu per satu SEBELUM eksekusi.
+> Gate G1: eksekusi HANYA di sandbox tanpa jaringan + tanpa akses file homelab.
 > Gate G3: tiap skenario wajib rollback + verifikasi kebersihan (hash sebelum/sesudah).
 > Gate G4: TIDAK PERNAH menyentuh package/direktori produksi — hanya fixture.
 
@@ -33,7 +33,7 @@
 - **Risiko:** rendah (pola palsu, terlabel fixture).
 
 ### S-04: (DITAHAN) Simulasi serangan jaringan / privilege escalation
-- **Status:** TIDAK diusulkan untuk dieksekusi. Melebihi batas aman rumah tangga.
+- **Status:** TIDAK diusulkan untuk dieksekusi. Melebihi batas aman homelab.
 
 ## Rekomendasi Ciel
 

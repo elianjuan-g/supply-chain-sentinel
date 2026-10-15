@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# sentinel-notify — Kirim temuan Sentinel ke Meja Bar, hanya bila ada yang baru.
+# sentinel-notify — Kirim temuan Sentinel ke webhook, hanya bila ada yang baru.
 #
 # Membaca diff-latest.txt + mcp-latest.txt + postinstall-latest.txt +
 # typosquat-latest.txt + secretscan-latest.txt, menyusun SATU pesan ringkas,
 # dedup via hash (tidak repost temuan yang sama), diam total bila tak ada temuan.
 # Pesan SENGAJA tanpa timestamp agar stabil untuk dedup.
-# Pola posting mengikuti fw-watch.py: sender CIEL, token via ?k= .
+# Pola posting: sender CIEL, token via ?k= (kompatibel webhook ala webhook).
 #
 # Kontrak:
 #   - stdout : "posted OK" bila terkirim, "DRY_RUN: ..." bila DRY_RUN=1, diam bila tak ada temuan
@@ -14,8 +14,8 @@
 set -euo pipefail
 
 STATE="${SENTINEL_STATE:-$HOME/.hermes/sentinel}"
-MEJA_API="${MEJA_API:-http://100.87.176.12:8788/api/post}"
-TOKEN_F="/home/elian/.hermes/meja-bar-app/token.txt"
+MEJA_API="${MEJA_API:-http://localhost:8788/api/post}"  # override via env untuk webhook sendiri
+TOKEN_F="${SENTINEL_TOKEN_FILE:-$HOME/.sentinel/notify-token.txt}"
 HASH_F="$STATE/last-notified.hash"
 
 MSG=""
@@ -67,7 +67,7 @@ fi
 
 # --- temuan secret-scan ---
 # AMAN by construction: secretscan-latest.txt TIDAK PERNAH berisi nilai secret
-# (hanya file:baris + tipe pola, sesuai desain privasi) — aman untuk Meja Bar.
+# (hanya file:baris + tipe pola, sesuai desain privasi) — aman untuk webhook.
 SS_F="$STATE/secretscan-latest.txt"
 if [ -f "$SS_F" ]; then
   S=$(grep -oE "temuan: [0-9]+" "$SS_F" 2>/dev/null | awk '{print $2}' || true)
@@ -83,7 +83,7 @@ if [ -z "${MSG//[[:space:]]/}" ]; then
   exit 0 # diam: tak ada temuan
 fi
 
-# batasi panjang (Meja Bar bukan log)
+# batasi panjang (webhook bukan log)
 if [ "${#MSG}" -gt 1500 ]; then
   MSG="${MSG:0:1500}"$'\n'"…(dipotong; detail di $STATE)"
 fi
@@ -100,7 +100,7 @@ if [ "${DRY_RUN:-0}" = "1" ]; then
   exit 0
 fi
 
-[ -f "$TOKEN_F" ] || { echo "sentinel-notify: ERROR: token Meja Bar tak ada" >&2; exit 1; }
+[ -f "$TOKEN_F" ] || { echo "sentinel-notify: ERROR: token webhook tak ada" >&2; exit 1; }
 TOKEN="$(cat "$TOKEN_F" | tr -d '[:space:]')"
 if python3 - "$MEJA_API" "$TOKEN" "$MSG" <<'EOF'; then
 import json, sys, urllib.request

@@ -4,7 +4,7 @@
 # Menjalankan `bumblebee scan --profile baseline`, membandingkan record_id
 # dengan baseline sebelumnya, dan HANYA melaporkan yang baru/hilang/berubah.
 # Diam (exit 0 tanpa output) bila tidak ada perubahan — sesuai pola "diam bila
-# normal" rumah tangga.
+# normal" homelab.
 #
 # Output contract:
 #   - $STATE/scan-previous.ndjson : baseline acuan run berikutnya

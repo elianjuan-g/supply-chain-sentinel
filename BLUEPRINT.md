@@ -75,7 +75,7 @@ Jalur pendukung (offline, bukan bagian binary):
 | `internal/model` | Skema NDJSON 0.2.0 + StableID | ±330 baris | `FindingType*` const = extension point tipe temuan baru |
 | `internal/exposure` | Exact-match katalog | ±330 baris | Matcher fuzzy/typosquat = modul baru, jangan ubah yang exact |
 | `internal/osv` + `tools/osvcatalog` | Konverter OSV→katalog (offline) | ±470 baris | Fondasi auto-refresh; tinggal bungkus download+swap atomik |
-| `internal/output` (+httpsink) | Emitter dedup + sink HTTP | ±200 baris | Pola sink bisa ditiru untuk notifier Meja Bar |
+| `internal/output` (+httpsink) | Emitter dedup + sink HTTP | ±200 baris | Pola sink bisa ditiru untuk notifier notification webhook |
 | `internal/endpoint` | Identitas host | kecil | Sudah cukup |
 | `internal/normalize` | Normalisasi nama | kecil | Tambah normalisasi per ecosystem baru bila perlu |
 
@@ -96,7 +96,7 @@ Fakta penting dari pembacaan kode:
 
 ### MUDAH — tanpa menyentuh inti scanner
 1. **Post-processor NDJSON** (binary/script terpisah): `sentinel diff` (bandingkan
-   StableID antar run → delta saja), ekspor SBOM CycloneDX, notifier Meja Bar.
+   StableID antar run → delta saja), ekspor SBOM CycloneDX, notifier notification webhook.
    Tidak ada perubahan Go inti; bisa Python/Go kecil.
 2. **Tipe Finding baru** (`internal/model`): tambah konstanta
    `FindingTypePostinstallRisk`, `FindingTypeTyposquatSuspect`,
@@ -154,7 +154,7 @@ pendek** (deep scan dibatasi `max-duration` ketat).
 | **C**ombine | Gabungkan inventory package + audit MCP + secret-scan menjadi satu "posture record" per host; gabungkan `osvcatalog refresh` sebagai pre-scan hook. |
 | **A**dapt | Adaptasi penanganan `env`-block parser MCP (buang nilai, simpan sinyal) menjadi credential-hygiene auditor: flag *keberadaan* key mirip-secret tanpa pernah mengutip nilainya. |
 | **M**odify/Magnify | Besarkan capture lifecycle-script yang sudah ada (npm) menjadi postinstall-risk scorer lintas ecosystem. |
-| **P**ut to other use | Pakai ulang NDJSON untuk hal lain: ekspor SBOM CycloneDX, baseline diff, alert Meja Bar — semua tanpa menyentuh binary. |
+| **P**ut to other use | Pakai ulang NDJSON untuk hal lain: ekspor SBOM CycloneDX, baseline diff, alert notification webhook — semua tanpa menyentuh binary. |
 | **E**liminate | Eliminasi full-scan berulang: emit hanya delta via StableID (incremental), full scan hanya mingguan. |
 | **R**everse | Balik arah aliran: bukan scanner push ke sink, tapi receiver pull delta; balik arah matching: selain katalog→host, juga host→baseline-terakhir (drift detection). |
 
@@ -167,7 +167,7 @@ pendek** (deep scan dibatasi `max-duration` ketat).
 5. **Reachability analyzer** — parse import JS/TS/Python/Go di project root; tandai package terinstall-tapi-tak-dipakai; tekan noise exposure untuk yang tak dipakai.
 6. **Intel auto-refresh** (`sentinel refresh`) — unduh ossf/malicious-packages → jalankan osvcatalog → swap atomik katalog, simpan N versi terakhir.
 7. **Baseline diff** (`sentinel diff`) — bandingkan NDJSON antar run via StableID; emit hanya record/finding baru/berubah/hilang.
-8. **Meja Bar notifier** — finding → pesan bridge/Meja Bar, dedup via StableID, tier notifikasi (kritis vs info).
+8. **notification webhook notifier** — finding → pesan bridge/notification webhook, dedup via StableID, tier notifikasi (kritis vs info).
 9. **Eksportir SBOM CycloneDX** — NDJSON → CycloneDX 1.5 JSON (post-processor).
 10. **MCP posture auditor** — server baru vs baseline, flag `npx -y`/selector `@latest`, heuristik nama key env mirip-secret (nama saja).
 11. **[LIAR] Canary honeypot** — tanam package/file canary (token `.npmrc` palsu, entri MCP server canary) yang tidak pernah disentuh tool legit; bila terbaca/terekfiltrasi → alert. Lapisan deception.
@@ -180,7 +180,7 @@ pendek** (deep scan dibatasi `max-duration` ketat).
 | 7 | Baseline diff | 5 | 4 | 5 | 5 | **19** ✅ pemenang |
 | 3 | Postinstall-hook hunter | 5 | 4 | 5 | 4 | 18 |
 | 6 | Intel auto-refresh | 5 | 4 | 5 | 4 | 18 |
-| 8 | Meja Bar notifier | 5 | 4 | 5 | 4 | 18 |
+| 8 | notification webhook notifier | 5 | 4 | 5 | 4 | 18 |
 | 9 | SBOM CycloneDX exporter | 5 | 3 | 5 | 5 | 18 |
 | 10 | MCP posture auditor | 4 | 5 | 4 | 4 | 17 |
 | 2 | Windows native (file-based) | 4 | 5 | 3 | 4 | 16 |
@@ -198,9 +198,9 @@ alerting yang waras.
 **Satu kalimat penolakan tiap opsi yang kalah:**
 - #3: kalah selisih 1 poin — tetap prioritas kedua karena datanya sudah mengalir.
 - #6: kalah selisih 1 poin — prasyarat agar katalog tidak basi; dikerjakan segera setelah diff.
-- #8: butuh #7 dulu agar tidak membanjiri Meja Bar; tanpa dedup ia adalah spam generator.
+- #8: butuh #7 dulu agar tidak membanjiri notification webhook; tanpa dedup ia adalah spam generator.
 - #9: nilai keamanan langsung kecil — artefak bukti yang bagus, bukan detektor.
-- #10: dampak tertinggi untuk rumah tangga ini, tapi butuh definisi "baseline MCP" dulu (#7).
+- #10: dampak tertinggi untuk homelab ini, tapi butuh definisi "baseline MCP" dulu (#7).
 - #2: dampak besar (target deploy = PC Windows) namun butuh keputusan registry (butir 8) untuk versi penuhnya.
 - #4: serangan nyata tapi jarang; risiko false-positive pada nama yang mirip secara sah.
 - #12: secara filosofis kuat (proof-of-detection) tapi praktisnya adalah test harness — mewah untuk sekarang.
@@ -215,9 +215,9 @@ alerting yang waras.
 | # | Penyebab kegagalan paling mungkin | Mitigasi |
 |---|---|---|
 | 1 | **Drift & beban maintenance**: upstream merilis schema v0.3/breaking change; rebase menumpuk konflik; fork membusuk. | Jaga fork inti tetap minimal — fitur baru sebagai paket/binary terpisah yang mengonsumsi NDJSON; rebase terjadwal tiap tag upstream; ekstensi skema hanya aditif. |
-| 2 | **Kelelahan noise**: secret-scan/typosquat membanjiri Meja Bar dengan FP → MyLord mute → sistem jadi hiasan. | Diff dulu (#7), detektor berisik belakangan; tier severity; allowlist FP; ambang "alert hanya untuk delta kritis". |
-| 3 | **Ledakan performa**: secret-scan + reachability mengubah scan detik menjadi menit/jam → cron tumpang tindih, PC meraung, MyLord mematikan. | Fitur berat hanya di profil `deep` opt-in; `max-duration` ketat sebagai default; benchmark di PC riil sebelum diaktifkan default. |
-| 4 | **Insiden privasi**: bug di secret scanner meng-emit nilai secret mentah ke diagnostic/Meja Bar → kepercayaan hancur. | Finding tidak pernah membawa nilai secret (nama pola + file:baris saja); fixture berisi secret palsu di test; anggap jalur diagnostic sebagai tidak tepercaya. |
+| 2 | **Kelelahan noise**: secret-scan/typosquat membanjiri notification webhook dengan FP → operator mute → sistem jadi hiasan. | Diff dulu (#7), detektor berisik belakangan; tier severity; allowlist FP; ambang "alert hanya untuk delta kritis". |
+| 3 | **Ledakan performa**: secret-scan + reachability mengubah scan detik menjadi menit/jam → cron tumpang tindih, PC meraung, operator mematikan. | Fitur berat hanya di profil `deep` opt-in; `max-duration` ketat sebagai default; benchmark di PC riil sebelum diaktifkan default. |
+| 4 | **Insiden privasi**: bug di secret scanner meng-emit nilai secret mentah ke diagnostic/notification webhook → kepercayaan hancur. | Finding tidak pernah membawa nilai secret (nama pola + file:baris saja); fixture berisi secret palsu di test; anggap jalur diagnostic sebagai tidak tepercaya. |
 | 5 | **Jebakan dependensi Windows**: pilih `x/sys` (rusak kemurnian zero-dep) atau `reg.exe` (rusak prinsip no-exec) tanpa keputusan → setengah jalan, rapuh. | Keputusan desain eksplisit tertulis dulu; dahulukan sumber file-based (psd1, Tasks XML, startup folder, nuspec) yang bebas dilema; registry = modul opsional bermarkah jelas. |
 
 ---
@@ -227,7 +227,7 @@ alerting yang waras.
 1. `sentinel diff` — post-processor NDJSON via StableID (fondasi segalanya).
 2. `sentinel refresh` — bungkus download OSV + osvcatalog + swap atomik + cron mingguan.
 3. Postinstall-hook hunter — tipe finding baru di atas `LifecycleScripts` yang sudah ada.
-4. Meja Bar notifier — di atas #1, dedup + tier.
+4. notification webhook notifier — di atas #1, dedup + tier.
 5. MCP posture auditor — butuh #1 untuk definisi "server baru".
 6. Ecosystem Windows file-based + `case "windows"` di roots/excludes.
 7. Typosquat detector (mode findings-only).
@@ -249,7 +249,7 @@ Apache-2.0 + atribusi upstream dipertahankan.
   saat analisis; semua klaim extension point berasal dari pembacaan statis.
 - Belum verifikasi seberapa besar overlap GitHub Advisory (GHSA) vs set MAL- di
   OSV — klaim "OSV saja cukup" masih hipotesis, perlu dicek sebelum #6 final.
-- Belum mengukur durasi scan riil di PC MyLord (baseline di WSL) — angka
+- Belum mengukur durasi scan riil di PC operator (baseline di WSL) — angka
   "hitungan detik" berasal dari klaim desain upstream, bukan pengukuran.
 - Bentuk fisik WinGet di disk (apakah cukup dari file tanpa registry) belum
   diteliti — butir #2 fase file-based menghindari ini, tapi WinGet penuh mungkin

@@ -43,14 +43,14 @@ Katalog paparan contoh: `upstream-bumblebee/threat_intel/`.
 ## Batas jujur
 
 - Butuh Go 1.25+ untuk build — VM Ciel belum tentu punya; PC WSL bisa dipasang.
-- Berjalan di mesin target (PC Tuanku), bukan dari cloud VM.
+- Berjalan di mesin target (PC operator), bukan dari cloud VM.
 - Hanya mencocokkan (ecosystem, name, version) terhadap katalog — bukan
   pendeteksi malware generik.
 
 ## Kombinasi kreatif
 
 - **Bumblebee × Strix**: Bumblebee jaga rantai pasok (dependency bersih?),
-  Strix jaga aplikasi (ada celah?). Dua lapis pertahanan rumah tangga.
+  Strix jaga aplikasi (ada celah?). Dua lapis pertahanan homelab.
 - **Bumblebee × fw-watch**: tiap ada advisory besar (mis. npm dibajak),
-  jalankan deep scan di PC, hasilnya masuk Meja Bar bila ada temuan.
+  jalankan deep scan di PC, hasilnya masuk notification webhook bila ada temuan.
 - Dijadwalkan: cron mingguan `baseline` di PC sebagai "pos jaga" supply chain.

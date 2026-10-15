@@ -1,11 +1,11 @@
-# Bumblebee — Sentinel Edition (fork rumah tangga)
+# Bumblebee — Sentinel Edition (fork homelab)
 
 Fork dari [perplexityai/bumblebee](https://github.com/perplexityai/bumblebee)
 v0.1.2 (upstream commit `c1e83c0`), branch `sentinel`.
 
 **Lisensi:** Apache-2.0 (dipertahankan dari upstream).
 **Atribusi:** kode inti © Perplexity AI — lihat `LICENSE`. Fork ini menambahkan
-lapisan dan fitur milik Rumah Tangga Elian tanpa menghapus kredit pembuat asli.
+lapisan dan fitur milik homelab tanpa menghapus kredit pembuat asli.
 
 ## Arah
 
@@ -22,16 +22,16 @@ lapisan dan fitur milik Rumah Tangga Elian tanpa menghapus kredit pembuat asli.
   - `sentinel-diff.sh` — baseline diff: hanya lapor package baru/hilang/berubah (diam bila tak ada perubahan)
   - `sentinel-refresh.sh` — refresh katalog paparan: sparse-clone ossf/malicious-packages → osvcatalog → validasi → swap atomik (fail-safe)
   - `sentinel-mcp-audit.sh` — audit server MCP vs allowlist; PRIVASI: hanya nama server, tidak pernah sentuh nilai env/credential
-  - `sentinel-notify.sh` — kirim temuan ke Meja Bar (sender CIEL, pola fw-watch); dedup via hash; diam bila tak ada temuan; DRY_RUN=1 untuk uji
+  - `sentinel-notify.sh` — kirim temuan ke notification webhook (sender CIEL, pola fw-watch); dedup via hash; diam bila tak ada temuan; DRY_RUN=1 untuk uji
 - `BLUEPRINT.md` — peta arsitektur + hasil diverge→converge + premortem
 
-## Operasi (cron di PC — TERPASANG 2026-10-16 atas "Gass" MyLord)
+## Operasi (cron di PC — TERPASANG 2026-10-16 atas "Gass" operator)
 
 ```cron
 # diff + audit + notifikasi: tiap pagi 07:00 (diam bila bersih)
-0 7 * * * /home/elian/.local/bin/sentinel-daily
+0 7 * * * $HOME/.local/bin/sentinel-daily
 # refresh katalog intel: tiap Minggu 04:00
-0 4 * * 0 /home/elian/.local/bin/sentinel-refresh >>/home/elian/.hermes/sentinel/cron-refresh.log 2>&1
+0 4 * * 0 $HOME/.local/bin/sentinel-refresh >>$HOME/.hermes/sentinel/cron-refresh.log 2>&1
 ```
 
 `sentinel-daily` = diff + mcp-audit + postinstall + typosquat → notify.

@@ -6,7 +6,7 @@
 # sendiri membuangnya saat parsing, dan kita tidak mengembalikannya.
 #
 # Kontrak:
-#   - $STATE/mcp-allowlist.txt : server yang sudah disetujui MyLord (satu nama per baris)
+#   - $STATE/mcp-allowlist.txt : server yang sudah disetujui operator (satu nama per baris)
 #   - $STATE/mcp-latest.txt    : hasil audit terakhir ("unknown: N" + daftar)
 #   - stdout : daftar server tak dikenal, HANYA bila ada; diam bila bersih
 #   - exit 0 selalu (kecuali scan gagal total)
