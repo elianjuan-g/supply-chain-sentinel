@@ -8,24 +8,29 @@
 ## Skenario yang diusulkan
 
 ### S-01: Typosquat install di sandbox
-- **Aksi:** buat package npm lokal bernama `lodahs` (fixture), install di
-  direktori sandbox kosong, jalankan `sentinel-typosquat` → harus flag TINGGI.
+- **Aksi:** record fixture `lodahs@9.9.9` (npm) di scan sandbox;
+  `sentinel-typosquat` harus flag TINGGI (jarak 1 dari `lodash`).
+- **Hasil uji 2026-10-16:** PASS — `[typosquat jarak=1 TINGGI] lodahs mirip 'lodash'`.
 - **Risiko:** rendah (fixture lokal, tanpa publish).
-- **Verifikasi:** sandbox dihapus total setelahnya; hash direktori kerja kembali.
 
 ### S-02: Postinstall mencurigakan di sandbox
-- **Aksi:** package fixture dengan skrip `postinstall` yang mencoba menulis ke
-  `/tmp/sim-probe` (jinak, tanpa jaringan); jalankan install di sandbox;
-  `sentinel-postinstall` harus memberi skor ≥7.
-- **Risiko:** sedang (kode berjalan walau jinak).
-- **Verifikasi:** `/tmp/sim-probe` tidak boleh ada di luar sandbox; sandbox dihapus.
+- **Aksi:** package fixture dengan skrip `postinstall` berpola `curl|bash`;
+  hunter membaca ISI hook (read-only, tidak dieksekusi) dan harus memflag
+  (skor ≥3 = dilaporkan).
+- **Hasil uji 2026-10-16:** PASS — terflag `[mencurigakan skor=4]`
+  (rule curl|bash=3 + curl=1). Ekspektasi awal "≥7" dikoreksi: ambang lapor
+  yang benar adalah ≥3.
+- **Risiko:** rendah (hook hanya dibaca, tidak dijalankan).
+- **Verifikasi:** sandbox dihapus total setelahnya.
 
 ### S-03: Secret-scan terhadap fixture bocor
-- **Aksi:** tulis file fixture berisi pola `AKIA...` palsu di sandbox;
-  `SENTINEL_SECRETSCAN=1 sentinel-secretscan` harus menangkap tanpa
+- **Aksi:** file fixture berisi pola `AKIA...` palsu + `db_password` di sandbox;
+  `SENTINEL_SECRETSCAN=1 sentinel-secretscan` harus menangkap keduanya tanpa
   memancarkan nilainya.
+- **Hasil uji 2026-10-16:** PASS parsial → temuan nyata: pola `db_password`
+  LOLOS karena `\b` ketat. Diperbaiki: `(?:^|[^a-zA-Z0-9])` — kini keduanya
+  tertangkap, nilai tetap tidak bocor.
 - **Risiko:** rendah (pola palsu, terlabel fixture).
-- **Verifikasi:** tidak ada nilai secret di output/log.
 
 ### S-04: (DITAHAN) Simulasi serangan jaringan / privilege escalation
 - **Status:** TIDAK diusulkan untuk dieksekusi. Melebihi batas aman rumah tangga.

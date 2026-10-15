@@ -28,7 +28,8 @@
 #   aws-key:      AKIA[0-9A-Z]{16}
 #   private-key:  -----BEGIN [RSA |EC |OPENSSH |DSA ]?PRIVATE KEY-----
 #   github-token: ghp_|gho_|ghu_|ghs_|ghr_ + >=36 char alnum
-#   generic:      (password|passwd|secret|api[_-]?key)\s*[:=]\s*['"][^'"]{8,}['"]
+#   generic:      (^|[^a-z])(password|passwd|secret|api[_-]?key)\s*[:=]\s*['"][^'"]{8,}['"]
+#                 (tanpa \b ketat: menangkap juga db_password, app_secret — temuan S-03)
 #   (nilai di kanan pola generic TIDAK PERNAH dicatat — hanya lokasi + tipe)
 #
 # Kontrak:
@@ -80,7 +81,7 @@ PATTERNS = [
     ("aws-key", re.compile(r"AKIA[0-9A-Z]{16}")),
     ("private-key", re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----")),
     ("github-token", re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}")),
-    ("generic", re.compile(r"(?i)\b(password|passwd|secret|api[_-]?key)\s*[:=]\s*['\"][^'\"]{8,}['\"]")),
+    ("generic", re.compile(r"(?i)(?:^|[^a-zA-Z0-9])(password|passwd|secret|api[_-]?key)\s*[:=]\s*['\"][^'\"]{8,}['\"]")),
 ]
 
 def is_binary(path):
