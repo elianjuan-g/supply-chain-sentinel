@@ -5,7 +5,7 @@
 Please report security issues using GitHub's private vulnerability
 reporting for this repository:
 
-<https://github.com/perplexityai/bumblebee/security/advisories/new>
+<https://github.com/<your-username>/supply-chain-sentinel/security/advisories/new>
 
 Do not file public issues for security-sensitive findings.
 

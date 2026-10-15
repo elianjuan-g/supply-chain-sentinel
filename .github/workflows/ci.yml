@@ -70,3 +70,23 @@ jobs:
 
       - name: govulncheck
         run: govulncheck ./...
+
+  sentinel-lint:
+    name: sentinel-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: bash syntax check
+        run: |
+          for f in sentinel/*.sh; do bash -n "$f" || exit 1; done
+          echo "bash -n: all scripts OK"
+
+      - name: shellcheck
+        uses: ludeeus/action-shellcheck@00ca9b1523c5d513e8dd3c06116a7c3b96e8a13e133 # v2.0.0
+        with:
+          scandir: './sentinel'
+          severity: warning
