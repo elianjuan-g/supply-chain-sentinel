@@ -44,6 +44,16 @@ if [ -f "$MCP_F" ]; then
   fi
 fi
 
+# --- temuan postinstall-hunter ---
+PI_F="$STATE/postinstall-latest.txt"
+if [ -f "$PI_F" ]; then
+  P=$(grep -oE "temuan: [0-9]+" "$PI_F" 2>/dev/null | awk '{print $2}' || true)
+  if [ "${P:-0}" -gt 0 ] 2>/dev/null; then
+    PLIST=$(grep -E "^\[(KRITIS|mencurigakan)" "$PI_F" | head -8)
+    MSG="$MSG"$'\n'"🔍 Install-hook mencurigakan ($P):"$'\n'"$PLIST"
+  fi
+fi
+
 # buang baris kosong di tepi
 MSG="$(printf '%s' "$MSG" | sed -e '/./,$!d' -e :a -e '/^\n*$/{$d;N;ba' -e '}')"
 if [ -z "${MSG//[[:space:]]/}" ]; then
