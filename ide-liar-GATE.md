@@ -1,7 +1,8 @@
-# Gate Desain — Ide Liar Sentinel (EKSPERIMENTAL, BELUM DIEKSEKUSI)
+# Gate Desain — Ide Liar Sentinel (EKSPERIMENTAL)
 
-> Status: DESAIN — menunggu stempel MyLord. TIDAK ada yang dijalankan.
 > Disusun: 2026-10-16. Prinsip: premortem dulu, aksi kemudian.
+> **Update 2026-10-16 (atas "Gass" MyLord):** canary DEPLOYED (lihat bawah).
+> Simulator masih DOKUMEN — tiap skenario butuh stempel satu per satu.
 
 ## 1. Canary Honeypot
 
@@ -44,3 +45,14 @@ di sandbox, jalankan postinstall mencurigakan di jail) untuk menguji deteksi.
 Bangun G1–G4 sebagai **dokumen + fixture non-eksekusi dulu** (aman, 0 risiko).
 Eksekusi simulasi hanya setelah MyLord men-stempel tiap gate. Canary lebih
 aman dari simulator — bila harus pilih satu, mulai dari canary.
+
+## Status Deploy Canary (2026-10-16, atas "Gass" MyLord)
+
+- Lokasi: `/home/elian/.hermes/sentinel/canary/` (G1: lokal saja, tak dipublish)
+- 3 file umpan, semua berlabel `SENTINEL-CANARY-DO-NOT-USE` (G2):
+  `AWS_CREDENTIALS.CANARY.txt`, `.env.CANARY`, `id_rsa.CANARY`
+- Check: `/home/elian/.local/bin/sentinel-canary-check` (manifest mtime+size;
+  `--init` sekali, diam bila tak tersentuh; teruji: sentuhan terdeteksi)
+- Terhubung ke `sentinel-daily` (cek tiap 07:00)
+- G3: sentuhan oleh proses rumah tangga (backup/sync) akan dilaporkan —
+  allowlist menyusul bila ada false positive.
