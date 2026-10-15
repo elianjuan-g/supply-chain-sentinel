@@ -41,6 +41,14 @@ Katalog live: `~/.hermes/sentinel/catalog/` → pakai `bumblebee scan --exposure
 
 - Fase 1 (fondasi): SELESAI 2026-10-15 — Go 1.27.2 di PC, `go build` + `go test ./...`
   hijau (24 paket), `sentinel-diff.sh` terverifikasi 3 skenario di PC.
-- Fase 2 (lapisan Sentinel): berjalan — diff ✓, berikutnya: refresh intel,
-  notifier Meja Bar, audit MCP.
-- Fase 3 (overpower): sesuai urutan build di `BLUEPRINT.md`.
+- Fase 2 (lapisan Sentinel): SELESAI 2026-10-15 —
+  - `sentinel-diff`: baseline diff 90 records, diam bila bersih ✓
+  - `sentinel-refresh`: 16 katalog (osv-malicious + 15 kurasi), 71MB, swap atomik fail-safe ✓
+  - `sentinel-mcp-audit`: 0 server MCP di PC, allowlist siap ✓
+  - `sentinel-notify`: DRY_RUN terverifikasi, dedup hash, pola posting = fw-watch ✓
+  - Exposure scan end-to-end (`--exposure-catalog` + `--findings-only`): PC BERSIH, nol temuan ✓
+  - Semua terpasang di `~/.local/bin/sentinel-*`
+- Fase 3 (overpower): berjalan — 3a `sentinel-postinstall` SELESAI 2026-10-15
+  (skor heuristik isi hook; teruji: KRITIS 10 / mencurigakan 3 / jinak diam;
+  vs PC asli: temuan 0). Berikutnya per BLUEPRINT.md: typosquat, SBOM,
+  secret-scan, reachability, Windows native, ide liar.
