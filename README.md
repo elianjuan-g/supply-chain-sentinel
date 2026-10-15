@@ -1,5 +1,7 @@
 # Bumblebee — Sentinel Edition
 
+![Supply Chain Sentinel — zero-token local security suite](docs/banner.png)
+
 A zero-token, local-first supply-chain security suite for developer machines.
 Fork of [perplexityai/bumblebee](https://github.com/perplexityai/bumblebee)
 (Apache-2.0, attribution retained — see `LICENSE`; upstream README preserved
