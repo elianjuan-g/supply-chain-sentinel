@@ -19,8 +19,23 @@ lapisan dan fitur milik Rumah Tangga Elian tanpa menghapus kredit pembuat asli.
 ## Struktur
 
 - `sentinel/` — lapisan Sentinel (script + tool pendamping, di luar binary inti)
-  - `sentinel-diff.sh` — baseline diff: hanya lapor package baru/hilang/berubah
+  - `sentinel-diff.sh` — baseline diff: hanya lapor package baru/hilang/berubah (diam bila tak ada perubahan)
+  - `sentinel-refresh.sh` — refresh katalog paparan: sparse-clone ossf/malicious-packages → osvcatalog → validasi → swap atomik (fail-safe)
+  - `sentinel-mcp-audit.sh` — audit server MCP vs allowlist; PRIVASI: hanya nama server, tidak pernah sentuh nilai env/credential
+  - `sentinel-notify.sh` — kirim temuan ke Meja Bar (sender CIEL, pola fw-watch); dedup via hash; diam bila tak ada temuan; DRY_RUN=1 untuk uji
 - `BLUEPRINT.md` — peta arsitektur + hasil diverge→converge + premortem
+
+## Operasi yang disarankan (cron di PC — BELUM dipasang, menunggu persetujuan jadwal)
+
+```cron
+# diff + audit + notifikasi: tiap pagi 07:00
+0 7 * * * ~/.local/bin/sentinel-diff && ~/.local/bin/sentinel-mcp-audit && ~/.local/bin/sentinel-notify
+# refresh katalog intel: tiap Minggu 04:00
+0 4 * * 0 ~/.local/bin/sentinel-refresh
+```
+
+State: `~/.hermes/sentinel/` (baseline, katalog, allowlist, log).
+Katalog live: `~/.hermes/sentinel/catalog/` → pakai `bumblebee scan --exposure-catalog ~/.hermes/sentinel/catalog/`.
 
 ## Status
 
