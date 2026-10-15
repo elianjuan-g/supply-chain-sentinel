@@ -50,5 +50,26 @@ Katalog live: `~/.hermes/sentinel/catalog/` → pakai `bumblebee scan --exposure
   - Semua terpasang di `~/.local/bin/sentinel-*`
 - Fase 3 (overpower): berjalan — 3a `sentinel-postinstall` SELESAI 2026-10-15
   (skor heuristik isi hook; teruji: KRITIS 10 / mencurigakan 3 / jinak diam;
-  vs PC asli: temuan 0). Berikutnya per BLUEPRINT.md: typosquat, SBOM,
-  secret-scan, reachability, Windows native, ide liar.
+  vs PC asli: temuan 0). 3b `sentinel-sbom` SELESAI 2026-10-15 (CycloneDX 1.5,
+  90 komponen/90 purl).
+- Fase 3c SELESAI 2026-10-16 (perintah Tuan "Lanjutkan sentinel"):
+  - `sentinel-typosquat`: jarak Damerau-Levenshtein vs kurasi populer npm/pypi
+    (jarak 1 = TINGGI, jarak 2 = SEDANG bila nama >=6 char); allowlist
+    `tomli` (false positive legit vs `toml`, ditemukan di data asli).
+    Teruji fixture 3/3 tertangkap; vs PC asli: bersih.
+  - `sentinel-secretscan`: OPT-IN (`SENTINEL_SECRETSCAN=1`), desain privasi
+    mengikat — TIDAK PERNAH memancarkan nilai (hanya file:baris + tipe);
+    cakupan terbatas (~/src ~/workspace, tanpa ~/.ssh/~/.aws, tanpa test/*);
+    pola: aws-key, private-key, github-token, generic. Teruji fixture 2/2
+    tanpa bocor nilai; vs PC asli: bersih (di luar fixture test).
+  - `sentinel-reachability`: audit terpasang-vs-dipakai (ast import pypi +
+    package.json deps npm); paket OS-managed (global_package_root) diabaikan
+    jujur; status INFORMASI — tidak di-wire ke notify. Vs PC: 90 paket sistem
+    diabaikan, 0 user-space.
+  - `sentinel-winnative`: inventaris Windows asli via interop WSL
+    (keputusan: tanpa dep Go baru; powershell.exe/reg/schtasks + timeout).
+    Hasil PC: 115 program, 91 modul PS, 424 scheduled task, 20 startup
+    (winget terlewat/timeout — tercatat).
+  - `sentinel-notify`: di-wire untuk typosquat + secretscan (DRY_RUN
+    terverifikasi; pesan secret aman by construction).
+  - Semua terpasang di `~/.local/bin/sentinel-*` (total 10 tool).

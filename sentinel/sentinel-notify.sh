@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # sentinel-notify — Kirim temuan Sentinel ke Meja Bar, hanya bila ada yang baru.
 #
-# Membaca diff-latest.txt + mcp-latest.txt, menyusun SATU pesan ringkas,
+# Membaca diff-latest.txt + mcp-latest.txt + postinstall-latest.txt +
+# typosquat-latest.txt + secretscan-latest.txt, menyusun SATU pesan ringkas,
 # dedup via hash (tidak repost temuan yang sama), diam total bila tak ada temuan.
 # Pesan SENGAJA tanpa timestamp agar stabil untuk dedup.
 # Pola posting mengikuti fw-watch.py: sender CIEL, token via ?k= .
@@ -51,6 +52,28 @@ if [ -f "$PI_F" ]; then
   if [ "${P:-0}" -gt 0 ] 2>/dev/null; then
     PLIST=$(grep -E "^\[(KRITIS|mencurigakan)" "$PI_F" | head -8)
     MSG="$MSG"$'\n'"🔍 Install-hook mencurigakan ($P):"$'\n'"$PLIST"
+  fi
+fi
+
+# --- temuan typosquat ---
+TQ_F="$STATE/typosquat-latest.txt"
+if [ -f "$TQ_F" ]; then
+  T=$(grep -oE "temuan: [0-9]+" "$TQ_F" 2>/dev/null | awk '{print $2}' || true)
+  if [ "${T:-0}" -gt 0 ] 2>/dev/null; then
+    TLIST=$(grep -E "^\[typosquat" "$TQ_F" | head -8)
+    MSG="$MSG"$'\n'"⌨️ Kemiripan typosquat ($T):"$'\n'"$TLIST"
+  fi
+fi
+
+# --- temuan secret-scan ---
+# AMAN by construction: secretscan-latest.txt TIDAK PERNAH berisi nilai secret
+# (hanya file:baris + tipe pola, sesuai desain privasi) — aman untuk Meja Bar.
+SS_F="$STATE/secretscan-latest.txt"
+if [ -f "$SS_F" ]; then
+  S=$(grep -oE "temuan: [0-9]+" "$SS_F" 2>/dev/null | awk '{print $2}' || true)
+  if [ "${S:-0}" -gt 0 ] 2>/dev/null; then
+    SLIST=$(grep -E "^\[secret" "$SS_F" | head -8)
+    MSG="$MSG"$'\n'"🔑 Indikasi secret di file ($S) — nilai tidak ditampilkan:"$'\n'"$SLIST"
   fi
 fi
 
