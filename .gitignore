@@ -7,3 +7,13 @@
 
 # goreleaser output
 /dist/
+
+# Secrets — NEVER commit real credentials (repo is public)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+credentials.json
+secrets.json
